@@ -9,7 +9,7 @@ import mimetypes
 import os, errno
 import argparse
 from selenium.webdriver.support.wait import WebDriverWait
-from pip.index import Link
+# from pip.index import Link
 import threading
 from PIL import Image
 import logging
@@ -47,34 +47,35 @@ class Scraping_Image(object):
         print(browser.title)
         browser.maximize_window()
         pause = 10
-    
+        
         lastHeight = browser.execute_script("return document.body.scrollHeight")
+        
         print(lastHeight)
     #     browser.get_screenshot_as_file("test03_1_" + str(i) + ".png")
+        next_height = 400
+        for i in range(0, lastHeight, 400):
+            next_height = i * next_height
+            scroll_text = "window.scrollTo(0, {0});".format(next_height)
+            browser.execute_script(scroll_text)
         browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-        newHeight = browser.execute_script("return document.body.scrollHeight")
-        try:
-            # wait for loading all the image and stream media file available
-            WebDriverWait(browser, 30).until(lambda x: x.find_element_by_xpath("//*[contains(@class,'stream-items')]/li[contains(@class,'stream-item')][" + str(elemsCount + 1) + "]"))
-        except:
-            pass
-        finally:
-            lastHeight = newHeight
-            data = browser.page_source
-            dir_path = os.path.dirname(os.path.realpath(__file__))
-            folder = os.path.join(dir_path, folderName)
-            dir_helper = Folder_Utils()
-            dir_helper.createEmptyFolder(folder)
-            screenshot_name = folderName.replace('.', '_') + ".png"
-            browser.get_screenshot_as_file(screenshot_name)
-            t1 = threading.Thread(target=self._download, args=(data, folderName))
-            t2 = threading.Thread(target=image_utils.slice_image, args=(os.path.join(folderName, "slices"), screenshot_name, 300,300,150))
-            t1.start()
-            t2.start()
-            t1.join()
-            t2.join()
-            browser.quit()
+        time.sleep(pause)
+        data = browser.page_source
+        dir_path = os.path.dirname(os.path.realpath(__file__))
+        folder = os.path.join(dir_path, folderName)
+        dir_helper = Folder_Utils()
+        dir_helper.createEmptyFolder(folder)
+        screenshot_name = folderName.replace('.', '_') + ".png"
+        browser.get_screenshot_as_file(screenshot_name)
+        t1 = threading.Thread(target=self._download, args=(data, folderName))
+        t2 = threading.Thread(target=image_utils.slice_image, args=(os.path.join(folderName, "slices"), screenshot_name, 300,300,150))
+        t1.start()
+        t2.start()
+        t1.join()
+        t2.join()
+        browser.quit()
             
-scraping = Scraping_Image('https://etcanada.com/')
+            
+            
+scraping = Scraping_Image('http://www.bbc.com/')
 scraping.run()
 

@@ -1,6 +1,14 @@
 import os
 import logging
 import shutil
+import uuid
+
+def CreateFolderName(url):
+    uid = '/'+str(uuid.uuid4())
+    if '//' in url:
+        folderName = url.split('//')[1].split('/')[0]
+        return folderName + uid
+    return url + uid
 
 class Folder_Utils(object):
 

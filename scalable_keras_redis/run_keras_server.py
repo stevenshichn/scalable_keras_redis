@@ -27,12 +27,16 @@ import mongodb_helper
 from mongodb_helper import Mongodb_helper
 from flask.templating import render_template
 import directory_utils
+from redis import Redis
+# from rq import Queue
 
 # initialize our Flask application, Redis server, and Keras model
 app = Flask(__name__)
 
 mongoclient = None
 mongo = None
+
+# q = Queue(connection=Redis())
 
 @app.route("/predict", methods=["POST"])
 def predict():
@@ -43,10 +47,11 @@ def predict():
 		print('data: ' + request.data.decode())
 		website = data["website"]
 		folderName = directory_utils.CreateFolderName(website)
-		if mongo.Query({"website" : website.strip()}).count() > 0:		
+		if mongo.Query({"website" : website.strip()}).count() > 0:
 			return jsonify(data)
 		print('scraping images at: ', website)
 		print('folder name: ' + folderName)
+# 		result = q.enqueue(process, website)
 		scraping = Scraping_Image(website, folderName)
 		if scraping.run():
 			data = {"success": True}
@@ -59,13 +64,25 @@ def predict():
 def index():
 	return render_template('index.html')
 
+def process(website):
+	folderName = directory_utils.CreateFolderName(website)
+	if mongo.Query({"website" : website.strip()}).count() > 0:
+		data = {"success": True}
+	else:
+		scraping = Scraping_Image(website, folderName)
+		if scraping.run():
+			data = {"success": True}
+			print('finishing')
+		
+	
+
 @app.route("/result", methods=["POST"])
 def get_results():
 	data = json.loads(request.data.decode())
 	website = data["web"]
 	folderName = directory_utils.CreateFolderName(website)
 	
-	results = mongo.Query({"website" : website}, "probability", 10)	
+	results = mongo.Query({"website" : website}, "result", 10)	
 	
 	s = dumps(results)
 	st = json.loads(s)

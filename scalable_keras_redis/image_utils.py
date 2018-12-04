@@ -62,7 +62,7 @@ def _crop_image_helper(im, url, website, box, dest_folder, count, name = "0"):
         a.save(file_path)
         predict = Prediction(url, file_path, file_name, website, True)
         count[0] = count_value
-        if predict.predict() >= 0.985:
+        if predict.predict() >= 0.92:
             return False
         return True
     except Exception as e:

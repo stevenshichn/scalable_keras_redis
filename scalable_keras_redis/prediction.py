@@ -4,6 +4,7 @@ from pymongo import MongoClient
 import image_helper
 from threading import Thread
 import queue
+from numpy import double
 
 model = Alcohol_Model()
 gm_model = Gambling_Model()
@@ -33,6 +34,8 @@ class Prediction(object):
         
     def predict(self):
         if image_helper.check_image_with_pil(self.image_path):
+#             alcohol_score = self.alcohol.predict(self.image_path)
+#             gambling_score = self.gambling.predict(self.image_path)
             out_queue = queue.Queue()
             t1 = Thread(target=self._thread_func, args = (self.alcohol.predict, self.image_path, out_queue, 'alcohol'))
             t2 = Thread(target=self._thread_func, args = (self.gambling.predict, self.image_path, out_queue, 'gambling'))
@@ -41,7 +44,9 @@ class Prediction(object):
             t1.join()
             t2.join()
             dict =  {'alcohol' : 0, 'gambling' : 0}
+#             dict = {'alcohol' : alcohol_score, 'gambling' : gambling_score}
             max_pred = 0
+#             max_pred = max(alcohol_score, gambling_score)
             need_to_insert = False
             for q in range(out_queue.qsize()):
                 for key, value in out_queue.get().items():

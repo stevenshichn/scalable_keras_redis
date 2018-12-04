@@ -36,7 +36,7 @@ class Download_Image(object):
                     index = index + 1
                 prediction = Prediction(self.website, image_path, image_name, url_folderName, False)
                 print('image_path : ' + image_path)
-                if prediction.predict() >= 0.985:
+                if prediction.predict() >= 0.92:
                     return False
                 return True
         except Exception as e:

@@ -9,11 +9,11 @@ import mimetypes
 import os, errno
 import argparse
 from selenium.webdriver.support.wait import WebDriverWait
-from pip.index import Link
 import threading
 from PIL import Image
 import logging
 from image_downloader import Download_Image
+from selenium.common.exceptions import TimeoutException
 import image_utils
 from multiprocessing import Process
 import directory_utils
@@ -22,19 +22,25 @@ from sys import platform
 import uuid
 import shutil
 import tempfile
+from threading import Lock, Thread
 
+lock = Lock()
+g = False
 phantomjs_path = ''
 if platform == "linux" or platform == "linux2":
     phantomjs_path = os.path.abspath('./tools/linux/phantomjs')
 if platform == "win32":
     phantomjs_path = os.path.abspath('./tools/windows/phantomjs.exe')
 browser = webdriver.PhantomJS(executable_path=phantomjs_path)
+browser.set_page_load_timeout(3)
 
 class Scraping_Image(object):
     def __init__(self, url, dest_folder=''):
         self.url = url
         self.dest_folder = dest_folder 
-        self.browser = browser       
+        self.browser = webdriver.PhantomJS(executable_path=phantomjs_path)
+        browser.set_page_load_timeout(3)
+#         self.browser = browser       
 #         print('browser: ' + str(browser))
     
     def _download(self, data, folderName):
@@ -51,8 +57,10 @@ class Scraping_Image(object):
 #                 self.dest_folder = folderName if self.dest_folder == '' else self.dest_folder
         ###browser = webdriver.PhantomJS("C:/Program Files/Python36/phantomjs-2.1.1-windows/bin/phantomjs.exe")
     #     browser = webdriver.Chrome('./chromedriver.exe')
-        
-        self.browser.get(self.url)
+        try:
+            self.browser.get(self.url)
+        except TimeoutException:
+            self.browser.execute_script("window.stop();")
         print('get source')
         print(self.browser.title)
         self.browser.maximize_window()
@@ -65,6 +73,16 @@ class Scraping_Image(object):
         print(lastHeight)
         try:
             self.browser.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+            if lastHeight > 13000:
+                pause = 10
+            elif lastHeight > 10000:
+                pause = 9
+            elif lastHeight > 8000:
+                pause = 7
+            elif lastHeight >5000:
+                pause = 5
+            else:
+                pause = 4
             time.sleep(pause)
             data = self.browser.page_source
             dir_path = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'static')
@@ -77,10 +95,11 @@ class Scraping_Image(object):
             print('error in scraping : ' + e.__str__())
             pass
         finally:            
-#             self.browser.quit()
+            self.browser.quit()
             if data is not None and folder is not None and screenshot_name is not None:
+#                 download_success = self._download(data, folderName)
                 slice_success = image_utils.slice_image(self.url, folderName, os.path.join(folder, "slices"), screenshot_name, 400,400,150) 
-                os.remove(screenshot_name)
+#                 os.remove(screenshot_name)
                 if slice_success:
                     if self._download(data, folderName): 
                         return True
@@ -88,12 +107,12 @@ class Scraping_Image(object):
                         return False
                 else:
                     return False
-#             t1 = threading.Thread(target=self._download, args=(data, folderName))
-#             t2 = threading.Thread(target=image_utils.slice_image, args=(os.path.join(folderName, "slices"), screenshot_name, 300,300,150))
-#             t1.start()
-#             t2.start()
-#             t1.join()
-#             t2.join()
+#                 t1 = threading.Thread(target=self._download, args=(data, folderName))
+#                 t2 = threading.Thread(target=image_utils.slice_image, args=(os.path.join(folderName, "slices"), screenshot_name, 300,300,150))
+#                 t1.start()
+#                 t2.start()
+#                 t1.join()
+#                 t2.join()
             
             return True
 #             

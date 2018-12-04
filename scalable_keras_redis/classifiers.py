@@ -77,8 +77,8 @@ class Alcohol_Model(Pred_Model_Base):
     
     def __init__(self):
         Pred_Model_Base.__init__(self)
-        json_file='./alcohol_model/model_vgg16_alcohol_0814_v1.json'
-        model_weight_file = './alcohol_model/model_vgg16_alcohol_0814_v1.h5'
+        json_file='./alcohol_model/model_vgg16.json'
+        model_weight_file = './alcohol_model/model_vgg16.h5'
         self.load_model(json_file, model_weight_file)
 
 class Gambling_Model(Pred_Model_Base):
